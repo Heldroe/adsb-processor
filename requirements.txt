@@ -1,0 +1,4 @@
+kafka-python-ng==2.2.3
+pyModeS==2.19
+
+adsb-protobufs @ git+https://github.com/Heldroe/adsb2kafka.git@66fec76b964e8f01b66dc7b09784d5d3b5faac26#subdirectory=libs/python/adsb-protobufs
