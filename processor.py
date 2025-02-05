@@ -7,6 +7,7 @@ import signal
 import sys
 from typing import Tuple, Optional
 
+from cachetools import TTLCache
 from kafka import KafkaConsumer, KafkaProducer
 import pyModeS as pms
 
@@ -35,14 +36,6 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-def is_even(frame):
-    return pms.hex2bin(frame)[53] == "0"
-
-
-def is_odd(frame):
-    return not is_even(frame)
-
-
 @dataclass
 class FlightData:
     icao: str
@@ -50,9 +43,9 @@ class FlightData:
     last_even: Optional[Tuple[float, str]] = field(default=None, repr=False)
 
     def handle_frame(self, timestamp, frame):
-        if is_even(frame):
+        if pms.hex2bin(frame)[53] == "0": # The frame is even
             self.last_even = (timestamp, frame)
-        else:
+        else: # The frame is odd
             self.last_odd = (timestamp, frame)
 
     def get_position(self):
@@ -102,7 +95,7 @@ SPEED_TYPES = {
     "TAS": adsb_pb2.AirborneVelocity.SpeedType.TRUE_AIR_SPEED,
 }
 
-flight_registry = {}
+flight_registry = TTLCache(maxsize=10000, ttl=600)
 
 for msg in kafka_consumer:
     icao = msg.key.hex()
